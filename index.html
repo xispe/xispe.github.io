@@ -1,68 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Error 404 page</title>
-  <style>
-    body {
-      margin: 0;
-      box-sizing: border-box;
-    }
+	<meta charset="utf-8">
+	<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>xispe</title>
+	<style>
+		body { 
+			background-color:#090B0B;
+			height: auto;
+		}
 
-    .container {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      background: linear-gradient(to right, rgba(0, 0, 0, .5), rgba(0, 0, 0, .1)), url('https://images.unsplash.com/photo-1595624871930-6e8537998592?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=871&q=80');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
+		h1 { 
+			color: #E5EBEA;
+			font-family: ubuntu;
+			font-size: 48px;
+		}
+		
+		h2 { 
+			color: #E5EBEA;
+			font-family: ubuntu;
+			font-size: 32px; }
+		
+		p { 
+			color: #E5EBEA;
+			font-family: ubuntu;
+			font-size: 24px;
+		}
 
-    h1 {
-      font-size: 10rem;
-      color: #fff;
-      text-transform: uppercase;
-      font-weight: 700;
-      margin-bottom: 1rem;
-    }
+		.card {
+			width: 200px;
+			height: 350px;
+			border: 1px solid;
+			border-color: #B5C4C1;
+			border-radius: 10px;
+			padding-inline: 10px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			column-gap: 5px;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 1),
+	                inset 0 4px 5px #E5EBEA;
+	        transition: transform 0.3s ease, box-shadow 0.3s ease;
+		}
 
-    h2 {
-      font-size: 2rem;
-      color: #fff;
-      text-transform: uppercase;
-      font-weight: 700;
-      margin-bottom: 1rem;
-    }
+		.card:hover {
+			transform: scale(1.05);
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 1),
+	                inset 0 4px 15px #E5EBEA;
+		}
 
-    p {
-      font-size: 1.5rem;
-      color: #fff;
-      font-weight: 700;
-      margin-bottom: 1rem;
-    }
+		.layout {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			gap: 20px;
+		}
 
-    a {
-      padding: 15px 20px;
-      background: #52caee;
-      font-size: 1rem;
-      text-decoration: none;
-      color: #333333;
-      border-radius: .25rem;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.808)
-    }
-  </style>
+		.link {
+			text-decoration: none;
+			color: inherit;
+		}
+
+	</style>
 </head>
-
 <body>
-  <div class="container">
-    <h1>Work in progress</h1>
-  </div>
-</body>
+<div align="center"><a href="https://xispe.github.io"><img id="cabeçalho" src="Imagens/cabeçalho.png" title="Pagina Inicial"></a></div>
 
+<div class="layout">
+	<a class="link" href="Como fiz meu primeiro site.html">
+		<div class="card">
+			<h2>Como fiz meu primeiro site</h2>
+			<p>Um resumo de como foi que fiz esse site e como você pode fazer o seu também</p>
+		</div>
+	</a>
+</div>
+
+</body>
 </html>
